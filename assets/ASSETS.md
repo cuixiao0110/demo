@@ -312,6 +312,9 @@
 | `sfx_deliver` | 交付成功 |
 | `sfx_scrap` | 出废品、交付失败 |
 | `bgm_main` | 本 Demo 的循环配乐《开炉》，由 Codex 使用 Python 合成原创旋律 |
+| `bgm_title.wav` | 约 21 秒的封面与练习曲《开炉·序》，循环播放 |
+| `sfx_work_ready` | 工位加工完成时播放的双音铃 |
+| `sfx_day_passed.wav`、`sfx_day_retry.wav`、`sfx_graduated.wav` | 达标、重试与学徒出师短曲，各播放一次 |
 
 ## 要加新素材
 

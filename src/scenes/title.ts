@@ -3,6 +3,7 @@
 import { newGame } from '../core/game';
 import { BaseScene } from '../engine/scenes';
 import { COLOR, hex } from '../engine/ui';
+import { workshopAudio } from './audio';
 
 // 左右两组街坊：[角色 ID 前缀, x, 是否在后排]。后排小一点、靠上一点。
 const FOLKS: [string, number, boolean][] = [
@@ -22,6 +23,7 @@ export class TitleScene extends BaseScene {
   }
 
   create() {
+    workshopAudio(this).setTrack('title');
     this.background('bg_title');
     // 上方压一层很淡的奶油色，让标题更跳。
     const veil = this.add.graphics();

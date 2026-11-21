@@ -4,6 +4,8 @@ import {
   type GameState, type Interaction, type Order, type Piece, type StationId,
 } from '../core/game';
 import { BaseScene } from '../engine/scenes';
+import { workshopAudio } from './audio';
+import { createPausePanel } from './pause';
 import { drawWorkshopRoom, WORKSHOP_GUIDE, WORKSHOP_PALETTE } from './workshop-room';
 import { lightWorkshopFurnace, playWorkshopEffect, rippleWorkshopWater, WorkshopBench, type WorkshopStation } from './workshop-stations';
 
@@ -72,6 +74,7 @@ export class PlayScene extends BaseScene {
   private movement: Partial<Record<Direction, Phaser.Input.Keyboard.Key[]>> = {};
   private selectedId: number | null = null;
   private near: Station | null = null;
+  private paused = false;
   private noticeExpires = 0;
   private walkCycle = 0;
   private player!: Phaser.GameObjects.Image;
@@ -86,6 +89,9 @@ export class PlayScene extends BaseScene {
   private handLabel!: Text;
   private forgeMeter!: Phaser.GameObjects.Graphics;
   private startButton!: Phaser.GameObjects.Container;
+  private pauseButton!: Phaser.GameObjects.Container;
+  private pausePanel!: Phaser.GameObjects.Container;
+  private audio!: ReturnType<typeof workshopAudio>;
 
   constructor() {
     super('play');
@@ -93,9 +99,13 @@ export class PlayScene extends BaseScene {
 
   create() {
     this.selectedId = null;
+    this.near = null;
+    this.paused = false;
     this.noticeExpires = 0;
     this.walkCycle = 0;
     this.stationViews.clear();
+    this.audio = workshopAudio(this);
+    this.audio.setTrack(this.ctx.game.phase === 'open' ? 'workshop' : 'title');
     this.drawWorkshop();
     for (const station of STATIONS) this.stationViews.set(station.id, new WorkshopBench(this, station));
     lightWorkshopFurnace(this, STATIONS[2]);
@@ -108,21 +118,22 @@ export class PlayScene extends BaseScene {
     this.carried = this.art('iron_dark', 0, 0, 37);
     this.handLabel = this.label(0, 0, '', { size: 15, weight: 700, align: 'center', color: PAPER, stroke: INK }).setDepth(660);
     this.forgeMeter = this.add.graphics().setDepth(650);
+    this.pausePanel = createPausePanel(this, () => this.togglePause());
 
     const keyboard = this.input.keyboard;
     const keys = (...names: string[]) => keyboard ? names.map((name) => keyboard.addKey(name)) : [];
     this.movement = { left: keys('A', 'LEFT'), right: keys('D', 'RIGHT'), up: keys('W', 'UP'), down: keys('S', 'DOWN') };
     this.onKey((event) => this.handleKey(event.code));
-    this.ctx.debug = () => ({ player: { x: this.player.x, y: this.player.y }, near: this.near?.id ?? null });
+    this.ctx.debug = () => ({ player: { x: this.player.x, y: this.player.y }, near: this.near?.id ?? null, paused: this.paused });
     this.events.once('shutdown', () => {
       this.ctx.debug = undefined;
-      this.music();
+      this.audio.setDucked(false);
     });
-    if (this.ctx.game.phase === 'open') this.music('bgm_main');
     this.refresh();
   }
 
   update(_time: number, delta: number) {
+    if (this.paused) return;
     const game = this.ctx.game;
     const events = tick(game, this.ctx.config, delta);
     if (game.phase === 'report') {
@@ -131,14 +142,23 @@ export class PlayScene extends BaseScene {
     }
     if (events.expired) this.showNotice(`${events.expired} 张订单超时，刀坯已回收`);
     if (events.cooled) {
-      this.sfx('sfx_hiss');
+      this.sfx('sfx_hiss', { volume: 0.55 });
       playWorkshopEffect(this, 'fx_splash', STATIONS[4], 49, 500);
       playWorkshopEffect(this, 'fx_steam', STATIONS[4], 42, 760);
     }
+    if (events.completed) this.sfx('sfx_work_ready');
     const { x, y } = this.player;
     this.move(delta);
     this.updateWalk(delta, this.player.x !== x || this.player.y !== y);
     this.refresh();
+  }
+
+  private togglePause() {
+    this.paused = !this.paused;
+    this.pausePanel.setVisible(this.paused);
+    this.pauseButton.setVisible(!this.paused);
+    this.startButton.setVisible(!this.paused && this.ctx.game.phase === 'tutorial');
+    this.audio.setDucked(this.paused);
   }
 
   private drawWorkshop() {
@@ -152,6 +172,10 @@ export class PlayScene extends BaseScene {
   }
 
   private createHud() {
+    this.pauseButton = this.button({
+      x: 1172, y: 690, w: 137, h: 32, size: 15, label: '暂停（Esc）', style: 'secondary',
+      onClick: () => this.togglePause(),
+    }).setDepth(700);
     this.dayLabel = this.label(677, 64, '', { size: 23, color: PAPER, weight: 700, align: 'center' });
     this.art('icon_clock', 795, 64, 23);
     this.clock = this.label(875, 64, '', { size: 23, color: PAPER, weight: 700, align: 'center' });
@@ -177,11 +201,11 @@ export class PlayScene extends BaseScene {
     this.startButton = this.button({
       x: 1081, y: 619, w: 295, h: 51, size: 19, label: '进入第一天（Enter）', key: 'Enter',
       onClick: () => {
-        if (this.ctx.game.phase !== 'tutorial') return;
+        if (this.paused || this.ctx.game.phase !== 'tutorial') return;
         startBusiness(this.ctx.game, this.ctx.config);
         this.selectedId = null;
         this.player.setPosition(145, 313);
-        this.music('bgm_main');
+        this.audio.setTrack('workshop');
         this.showNotice('开门营业，先选一张订单');
         this.refresh();
       },
@@ -191,6 +215,11 @@ export class PlayScene extends BaseScene {
   private handleKey(code: string) {
     const game = this.ctx.game;
     if (game.phase !== 'tutorial' && game.phase !== 'open') return;
+    if (code === 'Escape') {
+      this.togglePause();
+      return;
+    }
+    if (this.paused) return;
     if (/^Digit[1-3]$/.test(code)) {
       const slot = Number(code.at(-1));
       const order = game.orders.find((candidate) => candidate.slot === slot);

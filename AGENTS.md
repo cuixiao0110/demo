@@ -103,7 +103,7 @@ export class PlayScene extends BaseScene {
 可用素材见 [assets/ASSETS.md](assets/ASSETS.md)，新增图片参照 [assets/STYLE.md](assets/STYLE.md) 的暖色 Q 版古风。独立摆放工位，用碰撞区域、通道和交互高亮保证工位位置明确。
 
 - **现有素材**包括老周和顾客立绘、炉台、铁砧、冷却桶、磨刀石、冷热铁坯、菜刀、进度条和火星。原型可用 `char_apprentice_neutral` 表示学徒、`item_dagger` 表示小刀，工作台可用木板和形状搭出。
-- 营业时循环播放已登记的本地配乐 `assets/sounds/bgm_main.wav`。落锤、冷却、交付使用内置的 `sfx_hammer_heavy`、`sfx_hiss`、`sfx_deliver`，可以替换为已登记的本地音效。
+- 封面、营业和收工配乐在 `assets/manifest.json` 的 `music` 字段登记，由场景音频控制器播放。完工铃与落锤、冷却、交付归音效音量。按 Esc 暂停时，订单和工位的游戏时钟冻结。
 - **正式画面优先补**空手学徒的透明底斜俯视图 `char_apprentice_topdown`，用单独的刀坯图表现手持物。补一张透明底柴刀图标 `item_firewood_knife`，与矩形菜刀和小刀有明显轮廓区别。整坯、修整、交付与暂存可以共用木台底图，靠摆件和标签区分。
 - 在 `assets/manifest.json` 登记新文件，并在 `assets/ASSETS.md` 说明新增图片。素材启动时统一加载，使用素材 ID 调用 `this.art()`、`this.sfx()` 和 `this.music()`。尚未到位的图先用形状或文字表示。把素材来源、生成工具和许可写入提交用 README。
 

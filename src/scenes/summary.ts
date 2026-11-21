@@ -1,5 +1,6 @@
 import { endRun, nextDay, retryDay } from '../core/game';
 import { BaseScene } from '../engine/scenes';
+import { workshopAudio } from './audio';
 
 const INK = '#422e25';
 const GREEN = '#294b3d';
@@ -18,6 +19,7 @@ export class SummaryScene extends BaseScene {
     }
     const final = game.phase === 'final';
     const passed = final ? game.history.length === this.ctx.config.days.length : report.passed;
+    workshopAudio(this).setTrack(final && passed ? 'graduation' : passed ? 'closingPassed' : 'closingRetry');
     this.background('bg_result');
     this.add.rectangle(640, 360, 1280, 720, 0x392522, 0.55);
     const plate = this.add.graphics();

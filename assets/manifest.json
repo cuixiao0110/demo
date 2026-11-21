@@ -191,7 +191,14 @@
     "sfx_coin": "assets/sounds/sfx_coin.ogg",
     "sfx_deliver": "assets/sounds/sfx_deliver.ogg",
     "sfx_scrap": "assets/sounds/sfx_scrap.ogg",
-    "bgm_main": "assets/sounds/bgm_main.wav"
+    "sfx_work_ready": "assets/sounds/sfx_work_ready.wav"
+  },
+  "music": {
+    "title": "assets/sounds/bgm_title.wav",
+    "workshop": "assets/sounds/bgm_main.wav",
+    "closingPassed": "assets/sounds/sfx_day_passed.wav",
+    "closingRetry": "assets/sounds/sfx_day_retry.wav",
+    "graduation": "assets/sounds/sfx_graduated.wav"
   },
   "models": {
     "model_anvil": "assets/models/anvil.glb",

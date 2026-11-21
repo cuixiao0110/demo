@@ -124,7 +124,7 @@ function expireOrders(game: GameState, time: number) {
 }
 
 export function tick(game: GameState, config: Config, delta: number) {
-  const events = { expired: 0, cooled: false };
+  const events = { expired: 0, completed: false, cooled: false };
   if (game.phase !== 'open' && game.phase !== 'tutorial') return events;
 
   const day = config.days[game.day - 1];
@@ -146,6 +146,7 @@ export function tick(game: GameState, config: Config, delta: number) {
     if (bench.completesAt !== null && bench.completesAt <= game.elapsed) {
       bench.completesAt = null;
       bench.piece.step += 1;
+      events.completed = true;
       if (id === 'cool') events.cooled = true;
     }
   }

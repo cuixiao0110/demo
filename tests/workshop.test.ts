@@ -26,7 +26,9 @@ describe('铁匠铺订单和工位', () => {
     expect(interact(game, CONFIG, 'forge').kind).toBe('blocked');
     expect(interact(game, CONFIG, 'heat').kind).toBe('placed');
     expect(interact(game, CONFIG, 'heat').kind).toBe('blocked');
-    tick(game, CONFIG, 5000);
+    expect(tick(game, CONFIG, 4999).completed).toBe(false);
+    expect(tick(game, CONFIG, 1).completed).toBe(true);
+    expect(tick(game, CONFIG, 1).completed).toBe(false);
     expect(game.benches.heat?.piece.step).toBe(1);
     expect(interact(game, CONFIG, 'heat').kind).toBe('taken');
     expect(interact(game, CONFIG, 'bufferA').kind).toBe('placed');
